@@ -1,9 +1,20 @@
 #!/bin/bash
 
-INPUT_FILE="SampleVideo_1280x720_10mb.mp4"
-OUTPUT_DIR="SampleVideo_1280x720_10mb_transcoded_libopenh264"
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 input_file"
+    exit 1
+fi
 
-mkdir -p $OUTPUT_DIR
+INPUT_FILE="$1"
+
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "Error: Input file '$INPUT_FILE' not found."
+    exit 1
+fi
+
+OUTPUT_DIR="${INPUT_FILE%.*}_transcoded_libopenh264"
+
+mkdir -p "$OUTPUT_DIR"
 
 # Transcoding to HLS with different resolutions
 ffmpeg -i $INPUT_FILE \
@@ -19,6 +30,11 @@ ffmpeg -i $INPUT_FILE \
   -map "[v720out]" -c:v libopenh264 -metadata:s:v encoder="libopenh264" -b:v 3000k -g 48 -sc_threshold 0 -hls_time 6 -hls_segment_filename "$OUTPUT_DIR/720p_%03d.ts" -hls_playlist_type vod "$OUTPUT_DIR/720p.m3u8" \
   -map a:0 -c:a aac -b:a 128k -ac 2 -hls_time 6 -hls_segment_filename "$OUTPUT_DIR/audio_%03d.ts" -hls_playlist_type vod "$OUTPUT_DIR/audio.m3u8"
 
+if [ $? -ne 0 ]; then
+    echo "Error: ffmpeg transcoding failed."
+    exit 1
+fi
+
 # Create the master playlist
 echo "#EXTM3U" > $OUTPUT_DIR/master.m3u8
 echo "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",NAME=\"English\",DEFAULT=YES,AUTOSELECT=YES,URI=\"audio.m3u8\"" >> $OUTPUT_DIR/master.m3u8
@@ -30,3 +46,5 @@ echo "#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=854x480" >> $OUTPUT_DIR/mas
 echo "480p.m3u8" >> $OUTPUT_DIR/master.m3u8
 echo "#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720" >> $OUTPUT_DIR/master.m3u8
 echo "720p.m3u8" >> $OUTPUT_DIR/master.m3u8
+
+echo "Transcoding completed. Output files are stored in: $OUTPUT_DIR"
