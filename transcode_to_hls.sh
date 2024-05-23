@@ -12,12 +12,20 @@ if [ ! -f "$INPUT_FILE" ]; then
     exit 1
 fi
 
+FILE_SIZE=$(stat -c%s "$INPUT_FILE")
+MAX_SIZE=$((500 * 1024 * 1024))
+
+if [ "$FILE_SIZE" -ge "$MAX_SIZE" ]; then
+    echo "Error: Input file size is greater than 500MB."
+    exit 1
+fi
+
 OUTPUT_DIR="${INPUT_FILE%.*}_transcoded"
 
 mkdir -p "$OUTPUT_DIR"
 
 # Transcoding to HLS with different resolutions
-ffmpeg -i $INPUT_FILE \
+ffmpeg -i "$INPUT_FILE" \
   -filter_complex " \
   [0:v]split=4[v240][v360][v480][v720]; \
   [v240]scale=w=426:h=240[v240out]; \
@@ -36,15 +44,15 @@ if [ $? -ne 0 ]; then
 fi
 
 # Create the master playlist
-echo "#EXTM3U" > $OUTPUT_DIR/master.m3u8
-echo "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",NAME=\"English\",DEFAULT=YES,AUTOSELECT=YES,URI=\"audio.m3u8\"" >> $OUTPUT_DIR/master.m3u8
-echo "#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=426x240" >> $OUTPUT_DIR/master.m3u8
-echo "240p.m3u8" >> $OUTPUT_DIR/master.m3u8
-echo "#EXT-X-STREAM-INF:BANDWIDTH=1200000,RESOLUTION=640x360" >> $OUTPUT_DIR/master.m3u8
-echo "360p.m3u8" >> $OUTPUT_DIR/master.m3u8
-echo "#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=854x480" >> $OUTPUT_DIR/master.m3u8
-echo "480p.m3u8" >> $OUTPUT_DIR/master.m3u8
-echo "#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720" >> $OUTPUT_DIR/master.m3u8
-echo "720p.m3u8" >> $OUTPUT_DIR/master.m3u8
+echo "#EXTM3U" > "$OUTPUT_DIR/master.m3u8"
+echo "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"audio\",NAME=\"English\",DEFAULT=YES,AUTOSELECT=YES,URI=\"audio.m3u8\"" >> "$OUTPUT_DIR/master.m3u8"
+echo "#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=426x240" >> "$OUTPUT_DIR/master.m3u8"
+echo "240p.m3u8" >> "$OUTPUT_DIR/master.m3u8"
+echo "#EXT-X-STREAM-INF:BANDWIDTH=1200000,RESOLUTION=640x360" >> "$OUTPUT_DIR/master.m3u8"
+echo "360p.m3u8" >> "$OUTPUT_DIR/master.m3u8"
+echo "#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=854x480" >> "$OUTPUT_DIR/master.m3u8"
+echo "480p.m3u8" >> "$OUTPUT_DIR/master.m3u8"
+echo "#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720" >> "$OUTPUT_DIR/master.m3u8"
+echo "720p.m3u8" >> "$OUTPUT_DIR/master.m3u8"
 
 echo "Transcoding completed. Output files are stored in: $OUTPUT_DIR"
