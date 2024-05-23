@@ -14,10 +14,10 @@ Those scripts takes an input video file and transcodes it into HTTP Live Streami
 ./transcode_to_hls.sh input_file
 ```
 
-Or (if you prefer to use libopenh264)
+Or (if you prefer to use python)
 
 ```bash
-./transcode_to_hls_libopenh264.sh input_file
+python transcode_to_hls.py input_file
 ```
 
 ## Output
